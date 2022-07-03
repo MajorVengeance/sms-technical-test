@@ -43,13 +43,14 @@ namespace TechnicalTest
         public List<MessagePart> GetMessageParts(string message)
         {
             if (string.IsNullOrEmpty(message))
-            {
-                throw new ArgumentException("Message cannot be an empty string", nameof(message));
-            }
+                return new List<MessagePart> { new MessagePart { Characters = 0, Message = string.Empty, Part = 1 } };
+
             var messageParts = new List<MessagePart>();
             var characterPosition = new List<CharacterPosition>() { };
             foreach (var character in message)
             {
+                if (!_gsmCharacters.ContainsKey(character))
+                    throw new ArgumentOutOfRangeException(nameof(message), $"Non GSM character detected in file. Character: '{character}'");
                 characterPosition.Add(new CharacterPosition { Character = character, Position = (characterPosition.LastOrDefault()?.Position ?? 0) + _gsmCharacters[character] });
             }
 

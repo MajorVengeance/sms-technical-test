@@ -1,0 +1,2 @@
+﻿The following Japanese text is not made up of GSM Characters:
+この日本語のテキストはGSM文字で構成されていません
