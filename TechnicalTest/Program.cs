@@ -9,7 +9,21 @@ namespace TechnicalTest
     {
         static void Main(string[] args)
         {
-            var message = "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $% & / () =? *'<> #|; {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* ' <> #";
+            var message = string.Empty;
+            if (args[0] == "file" || args[0] == "--file" || args[0] == "\\file")
+            {
+                var fileName = args[1];
+                message = File.ReadAllText(fileName);
+            }
+            else if (args[0] == "text" || args[0] == "--text" || args[0] == "\\text")
+            {
+                Console.WriteLine("Please enter the message to send: ");
+                message = Console.ReadLine();
+            }
+            else
+            {
+                message = "abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $% & / () =? *'<> #|; {} abc def ghi jkl mno pqrs tuv wxyz ABC DEF GHI JKL MNO PQRS TUV WXYZ !\"§ $%& /() =?* ' <> #";
+            }
             var messagePartGenerator = new MessagePartGenerator();
             var messageParts = messagePartGenerator.GetMessageParts(message);
 
@@ -19,13 +33,13 @@ namespace TechnicalTest
             Console.WriteLine($"We have {messageParts.Count} parts");
             Console.WriteLine($"Total character size: {messageParts.Sum(m => m.Characters)}");
             Console.WriteLine("=========");
-            foreach(var part in messageParts)
+            foreach (var part in messageParts)
             {
                 Console.WriteLine($"Part: {part.Part}");
                 Console.WriteLine($"message: {part.Message}");
                 Console.WriteLine($"characters used: {part.Characters}");
                 Console.WriteLine("----------");
             }
-        }   
+        }
     }
 }

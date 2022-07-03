@@ -33,6 +33,10 @@ namespace TechnicalTest
 
         public List<MessagePart> GetMessageParts(string message)
         {
+            if (string.IsNullOrEmpty(message))
+            {
+                throw new ArgumentException("Message cannot be an empty string", nameof(message));
+            }
             var messageParts = new List<MessagePart>();
             var characterPosition = new List<CharacterPosition>() { new CharacterPosition { Character = ' ', Position = 0 } };
             foreach (var character in message)

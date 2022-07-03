@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TechnicalTest": {
+      "commandName": "Project",
+      "commandLineArgs": "--text"
+    }
+  }
+}
