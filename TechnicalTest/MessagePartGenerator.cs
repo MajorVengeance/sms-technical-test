@@ -5,7 +5,7 @@ using System.Text;
 
 namespace TechnicalTest
 {
-    internal class MessagePartGenerator
+    public class MessagePartGenerator
     {
         private readonly Dictionary<char, int> _gsmCharacters = new Dictionary<char, int>
         {
