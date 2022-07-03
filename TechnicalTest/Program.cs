@@ -47,6 +47,8 @@ namespace TechnicalTest
             {
                 Console.WriteLine(ex);
             }
+
+            Console.Read();
         }
     }
 }
