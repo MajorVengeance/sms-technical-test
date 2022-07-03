@@ -7,6 +7,9 @@ namespace TechnicalTest
 {
     public class MessagePartGenerator
     {
+        /// <summary>
+        /// Dictionary of characters, and their value
+        /// </summary>
         private readonly Dictionary<char, int> _gsmCharacters = new Dictionary<char, int>
         {
             { '@', 1 }, {'£', 1 }, { '$', 1 }, { '¥', 1 }, { 'è', 1 }, { 'é', 1 }, { 'ù', 1 },
@@ -31,6 +34,12 @@ namespace TechnicalTest
             { '~', 2 }, { '{', 2 }, { '}', 2 }
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public List<MessagePart> GetMessageParts(string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -38,16 +47,17 @@ namespace TechnicalTest
                 throw new ArgumentException("Message cannot be an empty string", nameof(message));
             }
             var messageParts = new List<MessagePart>();
-            var characterPosition = new List<CharacterPosition>() { new CharacterPosition { Character = ' ', Position = 0 } };
+            var characterPosition = new List<CharacterPosition>() { };
             foreach (var character in message)
             {
-                characterPosition.Add(new CharacterPosition { Character = character, Position = characterPosition.Last().Position + _gsmCharacters[character] });
+                characterPosition.Add(new CharacterPosition { Character = character, Position = (characterPosition.LastOrDefault()?.Position ?? 0) + _gsmCharacters[character] });
             }
-            characterPosition.RemoveAt(0);
 
             var multiPart = characterPosition.Last().Position > 160;
             while (characterPosition.Count > 0)
             {
+                if (messageParts.Count == 255)
+                    throw new IndexOutOfRangeException("Too many message parts required");
                 var splitCharacters = characterPosition.Where(c => c.Position <= (multiPart ? 153 : 160));
                 var msg = new string(splitCharacters.Select(x => x.Character).ToArray());
                 //Need to take stock of what our last position is - if we have a special character at position "153" it won't be added
