@@ -5,6 +5,9 @@ using System.Text;
 
 namespace TechnicalTest
 {
+    /// <summary>
+    /// A Logic class to split up a given message into separate SMS Message parts
+    /// </summary>
     public class MessagePartGenerator
     {
         /// <summary>
@@ -35,13 +38,15 @@ namespace TechnicalTest
         };
 
         /// <summary>
-        /// 
+        /// Parses a message into separate Message Parts.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
+        /// <param name="message">The raw message to be parsed</param>
+        /// <returns>A List of <see cref="MessagePart"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">If non GSM characters are passed in</exception>
+        /// <exception cref="IndexOutOfRangeException">If the message is split into more than 255 parts</exception>
         public List<MessagePart> GetMessageParts(string message)
         {
+            // If we have no message, just pass back a single empty message part
             if (string.IsNullOrEmpty(message))
                 return new List<MessagePart> { new MessagePart { Characters = 0, Message = string.Empty, Part = 1 } };
 
@@ -49,25 +54,46 @@ namespace TechnicalTest
             var characterPosition = new List<CharacterPosition>() { };
             foreach (var character in message)
             {
+                // Confirm each character is actually a GSM character, throw exception if not.
                 if (!_gsmCharacters.ContainsKey(character))
-                    throw new ArgumentOutOfRangeException(nameof(message), $"Non GSM character detected in file. Character: '{character}'");
-                characterPosition.Add(new CharacterPosition { Character = character, Position = (characterPosition.LastOrDefault()?.Position ?? 0) + _gsmCharacters[character] });
+                    throw new ArgumentOutOfRangeException(nameof(message), $"Non GSM character detected in message. Character: '{character}'");
+
+                // Add the character to our buffer -
+                // after working out the new position based on the previous character's postion, and our current character's value
+                characterPosition.Add(new CharacterPosition { 
+                    Character = character, 
+                    Position = (characterPosition.LastOrDefault()?.Position ?? 0) + _gsmCharacters[character] 
+                });
             }
 
-            var multiPart = characterPosition.Last().Position > 160;
+            // Quickly check whether we're using a multipart message or not - this affects how large our parts can be
+            var isMultiPart = characterPosition.Last().Position > 160;
+
+            // Use a while loop as we'll be subtracting from the buffer with each part
             while (characterPosition.Count > 0)
             {
+                // 255 is our max allowed parts, so if we hit this statement, we're at part 256
                 if (messageParts.Count == 255)
                     throw new IndexOutOfRangeException("Too many message parts required");
-                var splitCharacters = characterPosition.Where(c => c.Position <= (multiPart ? 153 : 160));
+
+                // Get the next part's worth of characters out the buffer (either 160 for single part, or 153 for multipart)
+                var splitCharacters = characterPosition.Where(c => c.Position <= (isMultiPart ? 153 : 160));
+                // Load the characters into an array, and create a new string out of it.
                 var msg = new string(splitCharacters.Select(x => x.Character).ToArray());
+                
                 //Need to take stock of what our last position is - if we have a special character at position "153" it won't be added
                 //due to technically being 154 - so we only want to remove 152 from position tally then - else we'd end up with a 
                 //special character being worth 1 rather than 2.
                 var charactersToLoad = splitCharacters.Last().Position;
+
                 messageParts.Add(new MessagePart { Message = msg, Characters = charactersToLoad, Part = messageParts.Count + 1 });
-                characterPosition.RemoveAll(c => c.Position <= (multiPart ? 153 : 160));
-                if (multiPart)
+                
+                // Remove all the characters that were just added using the same predicate as the select
+                characterPosition.RemoveAll(c => c.Position <= (isMultiPart ? 153 : 160));
+                
+                // If this is a multi part message, we're going to need to subtract the buffer down, so remove
+                // the amount of characters loaded in from the remaining characters
+                if (isMultiPart)
                     characterPosition.ForEach(c => c.Position -= charactersToLoad);
             }
 

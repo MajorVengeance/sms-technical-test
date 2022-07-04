@@ -38,7 +38,7 @@ namespace TechnicalTest.Tests
             var message = System.IO.File.ReadAllText("NonGSMCharacterFile.txt");
             var exception = Assert.Throws<ArgumentOutOfRangeException>(() => _messagePartGenerator.GetMessageParts(message));
             Assert.Equal("message", exception.ParamName);
-            Assert.StartsWith("Non GSM character detected in file.", exception.Message);
+            Assert.StartsWith("Non GSM character detected in message.", exception.Message);
         }
 
         /// <summary>
@@ -106,6 +106,28 @@ namespace TechnicalTest.Tests
             Assert.Equal(161, act.Sum(a => a.Characters));
             Assert.Equal(153, act.First().Characters);
             Assert.Equal(8, act.Last().Characters);
+        }
+
+        /// <summary>
+        /// TEST: If message content is greater than 160 characters then each part is a maximum of 153 characters.
+        /// TEST: Extended GSM characters are 2 bytes/characters: €[]|^\~{ }
+        /// 
+        /// As we have a special character (€) in this file, the total value will be 161 characters, rather than 160.
+        /// This should cause us to have two message parts instead of one, and each part should have a maximum of 153 characters
+        /// instead of 160.
+        /// We have placed this character at position 153, so that the character's full value will be 154. This should cause the 
+        /// first part to only be 152 characters, and the second part to have the € character leading.
+        /// </summary>
+        [Fact]
+        public void Given_MessageIs160Characters_With2ValueCharacterAtPosition153_When_GetMessageParts_Then_TwoMessageParts_Returned_With_2ValueCharacterLeadingSecondPart()
+        {
+            var message = System.IO.File.ReadAllText("161CharactersEuroAt153.txt");
+            var act = _messagePartGenerator.GetMessageParts(message);
+            Assert.NotNull(act);
+            Assert.Equal(2, act.Count);
+            Assert.Equal(161, act.Sum(a => a.Characters));
+            Assert.Equal(152, act.First().Characters);
+            Assert.StartsWith("€", act.Last().Message);
         }
 
         /// <summary>
